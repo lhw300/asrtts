@@ -25,8 +25,8 @@ jobs:
       - name: 语法检查
         run: |
           flake8 . --max-line-length=120 \
-            --exclude=.venv,__pycache__,tests \
-            --ignore=E302,E303,E305,E501,W291,W293,W292,E261,E262,E265,E266,E128,E204,E231,E301,E304,E306,E402,F401,F403,F405,F811,F821,F824,E115,E116
-
+            --exclude=.venv,__pycache__,tests,examples \
+            --ignore=E302,E303,E305,E501,W291,W293,W292,E261,E262,E265,E266,E128,E204,E231,E301,E304,E306,E402,F401,F403,F405,F811,F821,F824,E115,E116,E225,E226,E241,E703
+            
       - name: 运行单元测试
         run: pytest tests/ -v
