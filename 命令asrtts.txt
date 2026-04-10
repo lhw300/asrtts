@@ -1,0 +1,243 @@
+
+https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/vits.html
+java范例
+https://k2-fsa.github.io/sherpa/onnx/
+
+https://github.com/hfyydd/sherpa-onnx-server
+Sherpa-ONNX 语音识别服务器
+https://github.com/k2-fsa/sherpa-onnx/releases/tag/asr-models
+https://k2-fsa.github.io/sherpa/onnx/pretrained_models/index.html
+
+https://github.com/ruzhila/voiceapi
+
+
+voiceapi:
+  
+
+python app.py --tts-model "kokoro-multi-lang-v1_0"
+python app.py --tts-model "vits-icefall-zh-aishell3"
+# 示例：以 0.95 倍语速启动（让声音听起来更连贯）
+python app.py --tts-model "vits-icefall-zh-aishell3" --speed 0.95
+ python app.py --tts-model "vits-icefall-zh-aishell3" --asr-model "sensevoice" --speed 0.95
+ --tts-model "vits-icefall-zh-aishell3" --asr-model "sensevoice" --speed 0.95 --no-vad
+  --tts-model "vits-icefall-zh-aishell3" --asr-model "paraformer-trilingual" --speed 0.95 --no-vad
+ python app.py --no-vad --workers 4 --threads 1
+--tts-model "vits-icefall-zh-aishell3" --asr-model "paraformer-zh-int8" --speed 0.95 --no-vad  --workers 4 --threads 1
+
+启动appl.py最终参数： 
+python app.py --asr-model paraformer-zh --tts-model vits-icefall-zh-aishell3   --no-vad --workers 4 --threads 1
+python app.py --asr-model paraformer-zh --tts-model vits-icefall-zh-aishell3 --asr-provider cuda --tts-provider cuda --no-vad --workers 4 --threads 1
+
+ 
+ 识别结果 > {"text":"中国在大模型领域的快速发展已使其成为全球发古大模型数量最多的国家。多个国产大模型平台在基础性能和协议、金融方面表现突出。","finished":true,"idx":0,"start":0.0,"end":12.9999375,"channel":null}  [done后耗时: 980ms]
+
+为了防止混淆，这里梳理一下刚才提到的两种并发机制：
+
+Uvicorn Workers (--workers)：这是在系统层面开启多个完全独立的 Python 进程。如果你设为 4，相当于开了 4 个监听同一个端口的服务器。适合压榨多核 CPU，但每个 Worker 都会把你的 ASR 和 TTS 模型重新加载一遍进内存！极其吃显存/内存。
+
+Thread Pool Executor (我们在上一条加的 max_workers=64)：这是在单进程内部开启的异步线程池。15 路并发都在这一个进程里，模型只加载一次（省显存），遇到 C++ 同步计算时丢给这 64 个线程去排队执行。
+
+ONNX Threads (--threads)：这是 C++ 底层推理引擎计算单句语音时使用的 CPU 核心数。
+
+要在这三者之间取得完美平衡，我们需要明确它们各自的成本和收益，才能推导出一个“黄金配比”：第一层：Uvicorn Workers (多进程并行)作用：真正打破 Python GIL 限制，
+在系统层面复制多个 FastAPI 实例，并行处理 WebSocket 连接。成本（极高）：内存/显存翻倍。每个 Worker 进程都会在内存里重新加载一份 SenseVoice 和 VITS 模型。
+如果你有 4 个 Worker，你的模型内存占用直接 × 4。调优建议：不要开太多。假设你是 16 核 CPU，建议开 workers = 2 或 4。
+这样既能利用多核处理 Python 逻辑，又不会把内存撑爆。这 4 个进程会通过操作系统的负载均衡，把 15 路并发平摊，每个进程同时只处理约 3-4 路通话。
+
+第二层：内部 ThreadPoolExecutor (异步任务线程池)作用：让 FastAPI 在等待 C++ 语音模型推理（decode_stream 或 generate）和音频重采样（resample）时，主事件循环不被卡死，
+继续接收其他用户的网络包。成本（极低）：线程是轻量级的，共享所属 Worker 进程的内存。
+调优建议：由于我们已经用 Worker 分摊了请求，单个进程内的并发压力变小了。
+建议每个 Worker 的最大线程池设为 max_workers = 16 即可。
+
+第三层：ONNX Threads (--threads 算子级并行)作用：在 C++ 底层计算单句语音时，使用多少个 CPU 核心来加速矩阵运算。成本（极易引发灾难）：
+CPU 线程上下文切换（Context Switching）。调优建议：在你的高并发场景下，这个值必须压低！致命错误公式：假设 workers=4，单进程分配 4 路并发，
+如果你把 --threads 设为 4。那么极端情况下，底层会有 $4 \times 4 \times 4 = 64$ 个 CPU 密集型运算线程在同时抢占资源。
+如果是 16 核 CPU，这会导致极高的切换损耗，处理速度反而变慢。
+
+正确做法：为了保证总体吞吐量最大化，请强制将 --threads 设为 1 或 2。宁可单句话处理慢十几毫秒，也不能让 CPU 陷入调度地狱。?? 
+针对 15 路并发的“黄金平衡配置”（以 16/32 核 CPU 为例）结合以上分析，
+我推荐你采用以下启动配置参数：
+Uvicorn Workers: 4 （将 15 路并发拆分为每进程约 4 路） 命令行设置
+ThreadPoolExecutor: 16 （足够处理进程内的并发计算排队） app.py 
+ONNX Threads: 1 或 2 （减少底层 CPU 抢占）  命令行设置
+
+
+
+(注意：这里我仅将 TTS 设为了 GPU。因为你目前使用的是 paraformer-zh-int8 量化版 ASR 模型，它在 CPU 上的效率通常比 GPU 更高。如果你也想把 ASR 放到 GPU，请确保使用非 int8 版本并加上 --asr-provider cuda)
+
+
+ online:
+ (venv) PS E:\EIT\VR8\tools\sherpa\voiceapi> python app.py --tts-model "vits-icefall-zh-aishell3" --asr-model "zipformer-bilingual" --speed 0.95
+ 
+$OutputEncoding = [System.Text.Encoding]::UTF8; Invoke-RestMethod -Uri "http://localhost:8000/tts" -Method Post -ContentType "application/json; charset=utf-8" -Body (ConvertTo-Json @{text="通知：请各单位于三月十日前，报送下一月值班安排。"; sid=21} -Compress) -OutFile "test_utf8.wav"
+
+
+# 测试 HTTP 接口生成一个 wav 文件
+Invoke-RestMethod -Uri "http://localhost:8000/tts" `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body '{"text": "helloworld", "sid": 0}' `
+  -OutFile "test_tts.wav"
+
+
+ffmpeg -i sid_1.wav -ar 16000 sid_1_16k.wav
+ffmpeg -i sid_2.wav -ar 16000 sid_2_16k.wav
+ffmpeg -i sid_3.wav -ar 16000 sid_3_16k.wav
+ffmpeg -i sid_6.wav -ar 16000 sid_6_16k.wav
+
+
+$OutputEncoding = [System.Text.Encoding]::UTF8; chcp 65001; .\sherpa-onnx-offline.exe --paraformer=model.int8.onnx --tokens=tokens.txt ./test_wavs/1.wav
+
+$OutputEncoding = [System.Text.Encoding]::UTF8; chcp 65001; .\sherpa-onnx-offline.exe --paraformer=model.int8.onnx --tokens=tokens.txt ./sid_6.wav
+
+
+这个命令启动流式识别 asr，效果还行
+PS E:\EIT\VR8\tools\sherpa\asr\sherpa-onnx-streaming-paraformer-bilingual-zh-en> sherpa-onnx-online-websocket-server.exe `
+>>   --port=6006 `
+>>   --paraformer-encoder="./encoder.onnx" `
+>>   --paraformer-decoder="./decoder.onnx" `
+>>   --tokens="./tokens.txt" `
+>>   --num-threads=2
+
+
+
+
+
+# 1. 先生成标准 WAV (22050Hz)
+cat test.txt | ./piper --model huayan\zh_CN-huayan-medium.onnx --output_file temp.wav
+
+# 2. 再重采样为 8k
+ffmpeg -i temp.wav -ar 8000 output_8k.wav
+
+.\sherpa-onnx-offline-tts.exe ^
+ --vits-model=model.onnx ^
+ --vits-tokens=tokens.txt ^
+ --vits-lexicon=lexicon.txt ^
+ --vits-length-scale=1.35 ^
+ --tts-silence-scale=0.18 ^
+ --output-filename=tmp.wav ^
+ "通知：请各单位于三月十日前，报送下一月值班安排。"
+
+# 1. 确保编码
+chcp 65001
+
+# 2. 使用 --sid 参数换人（比如换成 ID 为 10 的音色）
+.\sherpa-onnx-offline-tts.exe `
+  --kokoro-model=model.onnx `
+  --kokoro-tokens=tokens.txt `
+  --kokoro-lexicon=lexicon-zh.txt `
+  --kokoro-data-dir=./espeak-ng-data `
+  --kokoro-voices=voices.bin `
+  --sid=10 `
+  --kokoro-length-scale=1.35 `
+  --tts-silence-scale=0.18 `
+  --output-filename=tmp.wav `
+  "通知， 请各单位于三月十日前， 报送下一月值班安排"
+
+.\sherpa-onnx-offline-tts.exe `
+  --vits-model=zh_CN-huayan-medium.onnx `
+  --vits-tokens=tokens.txt `
+  --vits-data-dir=espeak-ng-data `
+  --vits-noise-scale-w=0.8 `
+  --output-filename=notice_smooth.wav `
+  "通知。请各个单位于三月十日前报送下一月值班安排。"
+  
+  
+  # 循环生成 SID 0 到 173 的音频
+for ($i = 0; $i -le 173; $i++) {
+    $fileName = "sid_$($i).wav"
+    Write-Host "正在生成第 $i 个发音人: $fileName"
+    
+    .\sherpa-onnx-offline-tts.exe `
+      --vits-model=model.onnx `
+      --vits-lexicon=lexicon.txt `
+      --vits-tokens=tokens.txt `
+      --sid=$i `
+      --output-filename=$fileName `
+      "通知：请各单位于三月十日前，报送下一月值班安排。"
+}
+
+Write-Host "全部生成完毕！"
+  
+  
+  .\sherpa-onnx-offline-tts.exe `
+  --vits-model=model.onnx `
+  --vits-lexicon=lexicon.txt `
+  --vits-tokens=tokens.txt `
+  --sid=6 `
+  --vits-noise-scale=0.667 `
+  --vits-noise-scale-w=0.8 `
+  --vits-length-scale=1.0 `
+  --output-filename=test_sid6_natural.wav `
+  "通知。请各单位于三月十日前，报送下一月值班安排。"
+  
+  --vits-noise-scale=0.667: 这是 VITS 模型的官方默认黄金值。它能保持人声的纯净度，避免产生奇怪的电流音或沙哑感。
+
+--vits-noise-scale-w=0.8: 保持在这个数值可以确保语速的节奏感比较稳定，不会忽快忽慢。
+
+--vits-length-scale=1.0: 恢复正常语速。如果觉得“各单位”连贯性还是有问题，你可以微调到 0.95，但不要低于 0.9，否则声音会像在“赶路”一样不自然。
+  
+
+# 1. 切换 UTF-8 编码，确保中文路径和字符不乱码
+chcp 65001
+
+# 2. 循环生成 SID 1 到 50
+1..50 | ForEach-Object {
+    $sid = $_
+    Write-Host "--- 正在处理 ID: $sid ---" -ForegroundColor Cyan
+    
+    .\sherpa-onnx-offline-tts.exe `
+      --kokoro-model=model.onnx `
+      --kokoro-tokens=tokens.txt `
+      --kokoro-lexicon=lexicon-zh.txt `
+      --kokoro-data-dir=./espeak-ng-data `
+      --kokoro-voices=voices.bin `
+      --sid=$sid `
+      --kokoro-length-scale=0.9 `
+      --tts-silence-scale=0.15 `
+      --output-filename="sid_$sid.wav" `
+      "通知 请各单位于三月十日前 报送下一月值班安排"
+}
+
+Write-Host "任务完成！1-50 号音色已全部生成。" -ForegroundColor Yellow
+
+
+1. 语音识别 (ASR) 与处理
+sherpa-onnx-offline: 离线语音识别工具。你给它一个音频文件，它会输出文字。
+
+sherpa-onnx-online-websocket-server: 实时语音识别服务器。支持通过 WebSocket 协议接收流式音频并实时返回识别结果。
+
+sherpa-onnx-keyword-spotter: 关键词检测（唤醒词识别）。用于监听特定的词汇（如“嘿，Siri”）。
+
+sherpa-onnx-vad: 语音活动检测 (Voice Activity Detection)。用于判断音频中哪一段是人在说话，哪一段是静音。
+
+2. 语音合成 (TTS)
+sherpa-onnx-offline-tts: 离线文字转语音。输入一段文本，生成语音文件。
+
+sherpa-onnx-offline-zeroshot-tts: “零样本”语音合成。通常用于声音克隆，只需少量目标声音样本即可合成类似音色的音频。
+
+3. 音频增强与分析
+sherpa-onnx-offline-denoiser: 离线降噪工具，用于去除音频中的背景杂音。
+
+sherpa-onnx-offline-speaker-diarization: 扬声器日志（话者分离）。用于分析一段录音中有几个人在说话，并标注出谁在什么时候说了什么。
+
+sherpa-onnx-offline-language-identification: 语种识别。自动判断一段语音是哪种语言（如中文、英文、法文等）。
+
+4. 其他辅助工具
+sherpa-onnx-offline-punctuation: 自动加标点符号工具。
+
+sherpa-onnx-offline-audio-tagging: 音频打标签（例如识别背景声是“狗叫”还是“鸣笛”）。
+
+sherpa-onnx-version: 查看当前软件的版本信息。
+
+
+
+
+
+
+
+echo 通知：^<break time='1s' /^>请各单位上报。^</speak^> | piper.exe --model huayan\zh_CN-huayan-medium.onnx --ssml --output_file test.wav
+
+
+
+echo "通知：。请各单位于三月十日前上报，。下一月值班安排！." | piper.exe --model huayan\zh_CN-huayan-medium.onnx --output_raw | ffmpeg -f s16le -ar 22050 -ac 1 -i - -ar 8000 -f wav pipe:1 > test_pipe.wav

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="./voice.png" />
+    <script src="//cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@latest/dist/tailwind.min.css" rel="stylesheet">
+    <script src="//cdn.jsdelivr.net/npm/alpinejs@3.13.7/dist/cdn.min.js" defer></script>
+    <script src="./app.js"></script>
+ 
+
+    <title>voiceapi demo </title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+
+    <style type="text/tailwindcss">
+        .label { @apply text-gray-900 w-[50px] lg:w-20 }
+        .title{
+            @apply text-[16px] text-zinc-500 mx-2;
+        }
+
+        .select { @apply w-full rounded-md h-10 }
+
+        .round { @apply rounded border px-3 p-2 border-slate-300 placeholder-gray-400 placeholder:text-sm
+                        focus:bg-white focus:text-gray-900 focus:placeholder-gray-500 focus:outline-none
+                         focus:border-zinc-950 focus:border ring-0 focus:ring-0 text-gray-900 }
+
+        .checkbox { @apply ml-2 lg:ml-4 border focus:outline-none ring-0 focus:ring-gray-800 text-gray-900 }
+        .dash{ @apply border border-dashed border-zinc-200 flex flex-grow }
+
+        .button { @apply hover:bg-opacity-90 text-white font-bold py-1.5 px-6 rounded-full cursor-pointer }
+        .card { @apply bg-white shadow-sm rounded-xl border p-4 }
+
+
+    .animate-ping { 
+        animation: ping 2s cubic-bezier(0.5, 0.4, 0.2, 1) infinite;
+    }
+
+    @keyframes ping {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.2);
+            opacity: 0.7;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    </style>
+</head>
+
+<body>
+    <script>
+        async function initAudioWorklet() {
+            try {
+                // Check for browser support
+                if (!('AudioContext' in window) || !('audioWorklet' in AudioContext.prototype)) {
+                    console.error('Audio Worklet API is not supported in this browser.');
+                    return;
+                }
+
+                // Initialize AudioContext
+                const audioContext = new AudioContext();
+
+                // Add Audio Worklet module
+                await audioContext.audioWorklet.addModule('./audio_process.js');
+
+                console.log('Audio Worklet module added successfully.');
+                // Your code to use the Audio Worklet goes here
+
+            } catch (error) {
+                console.error('Error initializing Audio Worklet:', error);
+            }
+        }
+
+        // Initialize Audio Worklet when the page is loaded
+        //window.addEventListener('load', initAudioWorklet);
+    </script>
+    <div x-data="demoapp">
+        <header class="bg-gray-900 py-4 px-5 lg:p-4 lg:px-10 text-white sticky top-0 z-20">
+            <div class="flex w-full justify-between items-center">
+                <p class="gap-x-3">
+                    <span>VoiceAPI Demo</span> /
+                   
+                </p>
+                
+                    <svg t="1724996252746" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                        xmlns="http://www.w3.org/2000/svg" p-id="" width="25" height="25">
+                        <path
+                            d="M512 12.64c-282.752 0-512 229.216-512 512 0 226.208 146.72 418.144 350.144 485.824 25.6 4.736 35.008-11.104 35.008-24.64 0-12.192-0.48-52.544-0.704-95.328-142.464 30.976-172.512-60.416-172.512-60.416-23.296-59.168-56.832-74.912-56.832-74.912-46.464-31.776 3.52-31.136 3.52-31.136 51.392 3.616 78.464 52.768 78.464 52.768 45.664 78.272 119.776 55.648 148.992 42.56 4.576-33.088 17.856-55.68 32.512-68.48-113.728-12.928-233.28-56.864-233.28-253.024 0-55.904 20-101.568 52.768-137.44-5.312-12.896-22.848-64.96 4.96-135.488 0 0 43.008-13.76 140.832 52.48 40.832-11.36 84.64-17.024 128.16-17.248 43.488 0.192 87.328 5.888 128.256 17.248 97.728-66.24 140.64-52.48 140.64-52.48 27.872 70.528 10.336 122.592 5.024 135.488 32.832 35.84 52.704 81.536 52.704 137.44 0 196.64-119.776 239.936-233.792 252.64 18.368 15.904 34.72 47.04 34.72 94.816 0 68.512-0.608 123.648-0.608 140.512 0 13.632 9.216 29.6 35.168 24.576 203.328-67.776 349.856-259.616 349.856-485.76 0-282.784-229.248-512-512-512z"
+                            fill="#ffffff"></path>
+                    </svg>
+                </a>
+            </div>
+        </header>
+
+        <div class="px-6 py-10 w-full max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+<div class="card flex flex-col h-full">
+    <h2 class="text-lg font-semibold mb-4">Text To Speech</h2>
+    
+    <textarea x-model="text" class="round p-4 w-full h-[20rem] xl:h-[28rem] text-sm"
+        placeholder="Enter text here"></textarea>
+
+    <div class="grid grid-cols-3 gap-4 mt-4 mb-2">
+        <div>
+            <label class="text-[11px] text-zinc-500 block mb-1">说话人 ID</label>
+            <input type="number" x-model="targetSid" class="round w-full text-sm" placeholder="6">
+        </div>
+        <div>
+            <label class="text-[11px] text-zinc-500 block mb-1">语速</label>
+            <input type="number" step="0.05" x-model="targetSpeed" class="round w-full text-sm" placeholder="0.95">
+        </div>
+        <div>
+            <label class="text-[11px] text-zinc-500 block mb-1">采样率</label>
+            <select x-model="targetRate" class="round w-full text-sm">
+                <option value="8000">8000 (Aishell3)</option>
+                <option value="16000">16000 (Default)</option>
+                <option value="24000">24000 (Kokoro)</option>
+            </select>
+        </div>
+    </div>
+    <button @click="dotts" :disabled="disabled"
+        class="button bg-gray-900 flex items-center gap-x-2 mt-4 self-start">
+        <span>Speak</span>
+        <svg t="1726215464577" class="icon" viewBox="0 0 1024 1024" version="1.1"
+            xmlns="http://www.w3.org/2000/svg" p-id="4263" width="20" height="20">
+            
+        </svg>
+    </button>
+
+    <template x-if="elapsedTime">
+        <p x-text="`elapsedTime: ${elapsedTime}`" class="mt-4 text-sm text-gray-600"></p>
+    </template>
+</div>
+
+                <div class="card flex flex-col h-full">
+                    <h2 class="text-lg font-semibold mb-4">Online ASR</h2>
+                    <div
+                        class="rounded border border-gray-200 p-3 w-full flex-1 flex flex-col items-end overflow-y-auto bg-gray-50">
+                        <template x-for="item in logs">
+                            <div class="mt-2 mb-2 w-full flex justify-end">
+                                <span
+                                    class="text-white px-4 py-1.5 text-[13px] inline-flex border border-gray-900 rounded-t-full rounded-l-full bg-gray-900"
+                                    x-text="item?.text">
+                                </span>
+                            </div>
+                        </template>
+                        <template x-if="logs.length === 0">
+                            <p class="text-sm text-gray-500 self-center">No transcriptions yet. Press record to start.</p>
+                        </template>
+                    </div>
+
+                    <template x-if="currentText">
+                        <p x-text="`${currentText} …`" class="text-gray-800 mt-4 text-sm text-center"></p>
+                    </template>
+
+                    <template x-if="!recording">
+                        <div class="flex flex-col gap-y-4 items-center justify-center mt-4">
+                            <p @click="doasr"
+                                class="mt-2 border border-gray-100 rounded-full duration-300 hover:scale-105 hover:border-gray-400">
+                                <img src="./images/record.svg" alt="" class="w-14 h-14 mx-auto cursor-pointer">
+                            </p>
+                            <p class="text-gray-600">Click to record !</p>
+                        </div>
+                    </template>
+
+                    <template x-if="recording">
+                        <div class="flex flex-col items-center justify-center gap-y-4 mt-4">
+
+                            <p @click="stopasr"
+                                class="mt-2 border border-red-100 rounded-full duration-300 hover:scale-105  hover:border-red-400">
+                                <img src="./images/speaking.svg" alt=""
+                                    class="w-14 h-14 mx-auto cursor-pointer animate-ping">
+                            </p>
+                            <div class="flex items-center text-gray-600 gap-x-4">
+                                <p>Click to stop recording !</p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="card flex flex-col h-full">
+                    <h2 class="text-lg font-semibold mb-4">Offline ASR</h2>
+                    <div class="flex flex-col gap-4">
+                        <input type="file" accept=".mp3, .wav,.ogg" @change="file = $event.target.files[0]"
+                            class="w-full">
+                        <label class="flex items-center gap-2 text-sm text-gray-600">
+                            <input type="checkbox" class="checkbox" x-model="useInt8">
+                            <span>Use SenseVoice int8 model</span>
+                        </label>
+                        <button @click="uploadFile" :disabled="!file" class="button bg-blue-600 w-full">
+                            Upload & Transcribe
+                        </button>
+                    </div>
+                    <div class="rounded border border-gray-200 mt-6 p-4 flex-1 overflow-y-auto bg-gray-50">
+                        <h3 class="text-base font-semibold mb-3">Transcription Results</h3>
+                        <template
+                            x-if="fileElapsed !== null || fileSize !== null || fileAudioDuration !== null || fileRtf !== null || fileModel">
+                            <div class="mb-4 text-xs text-gray-500 flex flex-wrap gap-x-4 gap-y-2">
+                                <span x-show="fileElapsed !== null">
+                                    <span class="font-semibold text-gray-600">Elapsed:</span>
+                                    <span x-text="formatSeconds(fileElapsed)" class="ml-1"></span>
+                                </span>
+                                <span x-show="fileAudioDuration !== null">
+                                    <span class="font-semibold text-gray-600">Audio:</span>
+                                    <span x-text="formatSeconds(fileAudioDuration)" class="ml-1"></span>
+                                </span>
+                                <span x-show="fileRtf !== null">
+                                    <span class="font-semibold text-gray-600">RTF:</span>
+                                    <span x-text="fileRtf !== null ? fileRtf.toFixed(2) : '-'" class="ml-1"></span>
+                                </span>
+                                <span x-show="fileSize !== null">
+                                    <span class="font-semibold text-gray-600">File Size:</span>
+                                    <span x-text="fileSize !== null ? formatBytes(fileSize) : '-'" class="ml-1"></span>
+                                </span>
+                                <span x-show="fileModel">
+                                    <span class="font-semibold text-gray-600">ASR Model:</span>
+                                    <span x-text="fileModel" class="ml-1"></span>
+                                </span>
+                            </div>
+                        </template>
+                        <div class="space-y-3 max-h-[18rem] overflow-y-auto pr-1">
+                            <template x-for="segment in fileResults" :key="segment.idx">
+                                <div class="flex"
+                                    :class="(segment.channel ?? 0) % 2 === 0 ? 'justify-start' : 'justify-end'">
+                                    <div class="max-w-[75%] px-3 py-2 rounded-lg border"
+                                        :class="(segment.channel ?? 0) % 2 === 0 ? 'bg-blue-100 border-blue-200 text-blue-900' : 'bg-emerald-100 border-emerald-200 text-emerald-900'">
+                                        <p class="text-sm font-medium" x-text="segment.text"></p>
+                                        <p class="text-xs text-gray-600 mt-1"
+                                            x-text="`Ch ${segment.channel ?? 0} · ${segment.start.toFixed(2)}s - ${segment.end.toFixed(2)}s`">
+                                        </p>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="fileResults.length === 0">
+                                <p class="text-gray-500 text-sm">No results yet. Upload a file to see transcription.</p>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
