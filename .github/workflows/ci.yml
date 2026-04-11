@@ -1,3 +1,4 @@
+       
 name: CI
 
 on:
@@ -9,24 +10,37 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: 拉取代码
         uses: actions/checkout@v4
-
       - name: 安装 Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: 安装测试依赖
         run: pip install pytest numpy scipy flake8
-
       - name: 语法检查
         run: |
           flake8 . --max-line-length=120 \
             --exclude=.venv,__pycache__,tests,examples \
             --ignore=E302,E303,E305,E501,W291,W293,W292,E261,E262,E265,E266,E128,E204,E231,E301,E304,E306,E402,F401,F403,F405,F811,F821,F824,E115,E116,E225,E226,E241,E703
-            
       - name: 运行单元测试
         run: pytest tests/ -v
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd ~/asrtts
+            git pull origin main
+            source .venv/bin/activate
+            pip install -r requirements.txt
+            sudo systemctl restart asrtts
