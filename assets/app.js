@@ -48,51 +48,50 @@ document.addEventListener('alpine:init', () => {
 
         // --- 3. TTS (文本转语音) 逻辑 ---
         async dotts() {
-            const rate = parseInt(this.targetRate || 8000);
-            const audioContext = new AudioContext({ sampleRate: rate });
-            
-            if (audioContext.state === 'suspended') {
-                await audioContext.resume();
-            }
-            
+            if (!this.text || !this.text.trim()) return;
+            this.disabled = true;
+            this.elapsedTime = null;
+
             try {
-                await audioContext.audioWorklet.addModule('./audio_process.js');
-                
-                // 修复点：使用 getWsUrl 构建完整地址，解决 URL invalid 报错
-                const wsUrl = this.getWsUrl(`/tts?samplerate=${rate}&sid=${this.targetSid}&speed=${this.targetSpeed}&volume=${this.targetVolume}&split=true`);
-                console.log("TTS 连接中:", wsUrl);
-                const ws = new WebSocket(wsUrl);
+                const start = Date.now();
+                const url = `${window.location.origin}/tts`;
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: this.text,
+                        sid: parseInt(this.targetSid) || 0,
+                        samplerate: parseInt(this.targetRate) || 8000,
+                        speed: parseFloat(this.targetSpeed) || 1.0,
+                        volume: parseFloat(this.targetVolume) || 1.0,
+                    })
+                });
 
-                ws.onopen = () => {
-                    ws.send(this.text);
-                };
+                if (!resp.ok) {
+                    console.error('TTS 请求失败:', resp.status);
+                    this.disabled = false;
+                    return;
+                }
 
-                const playNode = new AudioWorkletNode(audioContext, 'play-audio-processor');
-                playNode.connect(audioContext.destination);
+                const blob = await resp.blob();
+                const audioUrl = URL.createObjectURL(blob);
+                const audio = new Audio(audioUrl);
 
-                this.disabled = true;
-                ws.onmessage = async (e) => {
-                    if (e.data instanceof Blob) {
-                        const arrayBuffer = await e.data.arrayBuffer();
-                        const int16Array = new Int16Array(arrayBuffer);
-                        const float32Array = new Float32Array(int16Array.length);
-                        for (let i = 0; i < int16Array.length; i++) {
-                            float32Array[i] = int16Array[i] / 32768.;
-                        }
-                        playNode.port.postMessage({ message: 'audioData', audioData: float32Array });
-                    } else {
-                        const result = JSON.parse(e.data);
-                        this.elapsedTime = result?.elapsed;
-                        this.disabled = false;
-                    }
-                };
+                const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+                this.elapsedTime = `${elapsed}s`;
 
-                ws.onerror = (err) => {
-                    console.error("TTS WebSocket 错误:", err);
+                audio.play();
+                audio.onended = () => {
+                    URL.revokeObjectURL(audioUrl);
                     this.disabled = false;
                 };
+                audio.onerror = () => {
+                    this.disabled = false;
+                };
+
             } catch (err) {
-                console.error("AudioWorklet 加载失败:", err);
+                console.error('TTS 错误:', err);
+                this.disabled = false;
             }
         },
 
