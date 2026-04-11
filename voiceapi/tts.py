@@ -276,7 +276,7 @@ class TTSStream:
                                 self.sid, 
                                 self.speed)                                
                                         
-        print(f"DEBUG: 目标采样率配置为: {self.target_sample_rate}")
+        logger.info(f"DEBUG: 目标采样率配置为: {self.target_sample_rate}")
         
         # --- 以下是新逻辑，确保输出物理文件为 8000Hz ---
         if not audio or audio.sample_rate <= 0:
@@ -296,14 +296,14 @@ class TTSStream:
         final_samples = np.clip(final_samples, -1.0, 1.0)
         final_sample_rate = audio.sample_rate
 
-        print(f"DEBUG: 1 正在写入文件，采样率设定为: {final_sample_rate}")
+        logger.info(f"DEBUG: 1 正在写入文件，采样率设定为: {final_sample_rate}")
         # 执行重采样
         if self.target_sample_rate and self.target_sample_rate != audio.sample_rate:
             num_samples = int(len(audio.samples) * self.target_sample_rate / audio.sample_rate)
             final_samples = resample(audio.samples, num_samples)
             final_sample_rate = self.target_sample_rate
             
-        print(f"DEBUG: 2 正在写入文件，采样率设定为: {final_sample_rate}")
+        logger.info(f"DEBUG: 2 正在写入文件，采样率设定为: {final_sample_rate}")
         output = io.BytesIO()
         soundfile.write(output,
                         final_samples,

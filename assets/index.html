@@ -402,7 +402,7 @@
             <label>说话人</label>
             <select x-model="targetSid">
               <template x-for="i in Array.from({length: 174}, (_, i) => i)" :key="i">
-                <option :value="i" x-text="'SID ' + i"></option>
+               <option :value="i" :selected="i == targetSid" x-text="'SID ' + i"></option>
               </template>
             </select>
           </div>
@@ -444,7 +444,7 @@
       <div class="card-header">
         <div class="card-title">
           <div class="card-icon icon-green">🎤</div>
-          Online ASR
+          Online ASR（外网需https域名)
         </div>
       </div>
       <div class="card-body">

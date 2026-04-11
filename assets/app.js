@@ -2,7 +2,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('demoapp', () => ({
         // --- 1. 变量定义 (确保 index.html 中的 x-model 都能找到对应变量) ---
         text: '您好，我是智能语音助手，请问有什么需要帮助的吗？',
-        targetSid: 6,         // 默认说话人ID
+        targetSid: '6',         // 默认说话人ID
         targetSpeed: 0.95,    // 默认语速
         targetRate: 8000,     // 默认采样率
         targetVolume: 1.0,    // 默认音量

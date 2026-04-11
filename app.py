@@ -83,9 +83,14 @@ if args.tts_model == 'vits-melo-tts-zh_en' and args.tts_provider == 'cuda':
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info("=" * 50)
+    logger.info(f"服务启动 | ASR={args.asr_model} | TTS={args.tts_model}")
+    logger.info(f"参数 | speed={args.speed} | volume={args.volume} | workers={args.workers} | no_vad={args.no_vad}")
+    logger.info("=" * 50)
     loop = asyncio.get_running_loop()
-    loop.set_default_executor(ThreadPoolExecutor(max_workers=16)) # 平衡点
+    loop.set_default_executor(ThreadPoolExecutor(max_workers=16))
     yield
+    logger.info("服务关闭")
 
 
 app = FastAPI(lifespan=lifespan)
@@ -261,6 +266,8 @@ class TTSRequest(BaseModel):
 async def tts_generate(req: TTSRequest):
     if not req.text:
         raise HTTPException(status_code=400, detail="text is required")
+
+    logger.info(f"POST /tts | sid={req.sid} | samplerate={req.samplerate} | speed={req.speed} | volume={req.volume} | text={req.text[:20]}")
 
     # 1. 获取模型配置的真实采样率 (Aishell3 会返回 8000)
     _, model_rate = get_tts_engine(args)
