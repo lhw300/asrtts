@@ -19,12 +19,19 @@ from scipy.signal import resample
 from typing import List
 import time
 import copy
+from contextlib import asynccontextmanager
 
 # 在 app.py 的最上方 imports 之后加入：
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 # 1. 顶部导入并设置单个 Worker 的内部线程池为 16
 from contextlib import asynccontextmanager
+
+logging.basicConfig(
+    format='%(levelname)s: %(asctime)s %(name)s:%(lineno)s %(message)s',
+    level=logging.INFO,
+    force=True
+)
 
 models_root = './models'
 
