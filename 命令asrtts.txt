@@ -1,4 +1,9 @@
 
+
+ssh -i asrtts-key.pem ubuntu@54.234.253.119
+
+
+
 https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/vits.html
 java·¶Àý
 https://k2-fsa.github.io/sherpa/onnx/
