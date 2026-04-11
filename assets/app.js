@@ -144,11 +144,14 @@ document.addEventListener('alpine:init', () => {
 
         async stopasr() {
             if (this.asrWS) {
-                this.asrWS.close();
+				if (this.asrWS.readyState === WebSocket.OPEN) {
+					this.asrWS.send('done');
+				}
+               // this.asrWS.close();
                 this.asrWS = null;
             }
             this.recording = false;
-            this.currentText = null;
+           // this.currentText = null;
         },
 
         // --- 5. 离线 ASR (文件上传识别) 逻辑 ---

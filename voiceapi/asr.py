@@ -337,31 +337,40 @@ def load_asr_engine(samplerate: int, args) -> sherpa_onnx.OnlineRecognizer:
     if cache_engine:
         return cache_engine
     st = time.time()
+    use_vad = not getattr(args, 'no_vad', False)
     if args.asr_model == 'zipformer-bilingual':
         cache_engine = create_zipformer(samplerate, args)
     elif args.asr_model == 'sensevoice':
         cache_engine = create_sensevoice(samplerate, False, args)
-        _asr_engines['vad'] = load_vad_engine(samplerate, args)
+        if use_vad:
+            _asr_engines['vad'] = load_vad_engine(samplerate, args)
     elif args.asr_model == 'sensevoice-int8':
         cache_engine = create_sensevoice(samplerate, True, args)
-        _asr_engines['vad'] = load_vad_engine(samplerate, args)
+        if use_vad:
+            _asr_engines['vad'] = load_vad_engine(samplerate, args)
     elif args.asr_model == 'paraformer-trilingual':
         cache_engine = create_paraformer_trilingual(samplerate, args)
-        _asr_engines['vad'] = load_vad_engine(samplerate, args)
+        if use_vad:
+            _asr_engines['vad'] = load_vad_engine(samplerate, args)
     elif args.asr_model == 'paraformer-zh':
         cache_engine = create_paraformer_zh(samplerate, args)
-        _asr_engines['vad'] = load_vad_engine(samplerate, args)
+        if use_vad:
+            _asr_engines['vad'] = load_vad_engine(samplerate, args)
     elif args.asr_model == 'paraformer-zh-int8':
         cache_engine = create_paraformer_zh_int8(samplerate, args)
-        _asr_engines['vad'] = load_vad_engine(samplerate, args)
+        if use_vad:
+            _asr_engines['vad'] = load_vad_engine(samplerate, args)
     elif args.asr_model == 'paraformer-en':
         cache_engine = create_paraformer_en(samplerate, args)
-        _asr_engines['vad'] = load_vad_engine(samplerate, args)
+        if use_vad:
+            _asr_engines['vad'] = load_vad_engine(samplerate, args)
     elif args.asr_model == 'fireredasr':
         cache_engine = create_fireredasr(samplerate, args)
-        _asr_engines['vad'] = load_vad_engine(samplerate, args)
+        if use_vad:
+            _asr_engines['vad'] = load_vad_engine(samplerate, args)
     else:
         raise ValueError(f"asr: unknown model {args.asr_model}")
+
     _asr_engines[args.asr_model] = cache_engine
     logger.info(f"asr: engine loaded in {time.time() - st:.2f}s")
     return cache_engine

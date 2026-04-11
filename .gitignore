@@ -39,3 +39,5 @@ models
 # 音频临时文件
 *.pcm
 *.wav
+*.pem
+命令asrtts.txt
