@@ -1,6 +1,21 @@
 
 
 ssh -i asrtts-key.pem ubuntu@54.234.253.119
+http://54.234.253.119:8000 
+
+
+只有https才能访问麦克风，所以用这个转换域名技术：
+https://controlling-lens-residence-remained.trycloudflare.com/
+
+
+# 安装 cloudflared
+wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared-linux-amd64.deb
+
+# 启动隧道
+cloudflared tunnel --url http://localhost:8000
+
+
 
 
 

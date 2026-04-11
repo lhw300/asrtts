@@ -377,8 +377,7 @@
 
   <header>
     <div class="logo">
-      <div class="logo-dot"></div>
-      VoiceAPI Studio
+      <span style="color:#dc2626;font-weight:800;font-size:22px;letter-spacing:-0.03em;">L</span>
     </div>
     <div class="header-right">
       <a href="./speaker_test.html" class="header-link">🎙 试音工具</a>
@@ -427,6 +426,9 @@
 
         <div class="row">
           <button @click="dotts" :disabled="disabled" class="btn btn-primary">▶ 合成播放</button>
+          <template x-if="audioUrl">
+            <a @click.prevent="downloadWav()" href="#" class="btn btn-ghost">⬇ 下载 WAV</a>
+          </template>
           <template x-if="elapsedTime">
             <span class="elapsed">⚡ <span x-text="elapsedTime"></span></span>
           </template>

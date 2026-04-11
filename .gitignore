@@ -41,3 +41,4 @@ models
 *.wav
 *.pem
 命令asrtts.txt
+*.pdf

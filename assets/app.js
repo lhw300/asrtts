@@ -12,6 +12,7 @@ document.addEventListener('alpine:init', () => {
         currentText: null,
         disabled: false,
         elapsedTime: null,
+        audioUrl: null,
         logs: [],
         
         file: null,
@@ -51,6 +52,7 @@ document.addEventListener('alpine:init', () => {
             if (!this.text || !this.text.trim()) return;
             this.disabled = true;
             this.elapsedTime = null;
+            this.audioUrl = null;
 
             try {
                 const start = Date.now();
@@ -75,24 +77,28 @@ document.addEventListener('alpine:init', () => {
 
                 const blob = await resp.blob();
                 const audioUrl = URL.createObjectURL(blob);
+                this.audioUrl = audioUrl;
                 const audio = new Audio(audioUrl);
 
                 const elapsed = ((Date.now() - start) / 1000).toFixed(2);
                 this.elapsedTime = `${elapsed}s`;
 
                 audio.play();
-                audio.onended = () => {
-                    URL.revokeObjectURL(audioUrl);
-                    this.disabled = false;
-                };
-                audio.onerror = () => {
-                    this.disabled = false;
-                };
+                audio.onended = () => { this.disabled = false; };
+                audio.onerror = () => { this.disabled = false; };
 
             } catch (err) {
                 console.error('TTS 错误:', err);
                 this.disabled = false;
             }
+        },
+
+        downloadWav() {
+            if (!this.audioUrl) return;
+            const a = document.createElement('a');
+            a.href = this.audioUrl;
+            a.download = 'tts_output.wav';
+            a.click();
         },
 
         // --- 4. 在线 ASR (语音识别) 逻辑 ---

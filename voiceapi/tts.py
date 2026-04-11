@@ -172,7 +172,9 @@ class TTSStream:
             resampled_chunk = resample(chunk, num_samples)
             chunk = resampled_chunk.astype(np.float32)
 
+       #logger.info("tts: chunk="+chunk);
         chunk = chunk *self.volume # add by lhw
+       # logger.info("tts: vol chunk="+chunk);
         scaled_chunk = chunk * 32768.0
         clipped_chunk = np.clip(scaled_chunk, -32768, 32767)
         int16_chunk = clipped_chunk.astype(np.int16)   #float---> int
@@ -256,7 +258,7 @@ class TTSStream:
         soundfile.write(output,
                         audio.samples,
                         samplerate=audio.sample_rate,
-                        subtype="PCM_16",
+                        subtype="ALAW",
                         format="WAV")
         output.seek(0)
         return output
@@ -288,8 +290,12 @@ class TTSStream:
                     f"duration: {audio_duration:.2f}s, "
                     f"original rate: {audio.sample_rate}")
 
-        final_samples = audio.samples
+        #final_samples = audio.samples
+        #final_sample_rate = audio.sample_rate
+        final_samples = np.array(audio.samples, dtype=np.float32) * self.volume
+        final_samples = np.clip(final_samples, -1.0, 1.0)
         final_sample_rate = audio.sample_rate
+
         print(f"DEBUG: 1 正在写入文件，采样率设定为: {final_sample_rate}")
         # 执行重采样
         if self.target_sample_rate and self.target_sample_rate != audio.sample_rate:
@@ -302,7 +308,7 @@ class TTSStream:
         soundfile.write(output,
                         final_samples,
                         samplerate=final_sample_rate, 
-                        subtype="PCM_16",
+                        subtype="ALAW",
                         format="WAV")
         output.seek(0)
         return output

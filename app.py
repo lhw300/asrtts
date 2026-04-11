@@ -268,9 +268,10 @@ async def tts_generate(req: TTSRequest):
     # 2. 传入 model_rate 确保生成 8k 文件，传入 args.speed 应用命令行语速
     tts_stream = await start_tts_stream(
         sid=req.sid, 
-        sample_rate=model_rate, 
-        speed=args.speed,
-        volume=args.volume,
+       #sample_rate=model_rate,
+        sample_rate=req.samplerate,
+        speed=req.speed,
+        volume=req.volume,
         args=args
     )
 
