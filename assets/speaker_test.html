@@ -2,349 +2,513 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>说话人试音工具</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>说话人试音 · VoiceAPI Studio</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
   :root {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --accent: #e8d5a3;
-    --accent2: #7eb8b0;
-    --text: #e0e0e0;
-    --muted: #666;
-    --good: #7eb8b0;
-    --bad: #c97b7b;
+    --bg: #f5f5f0;
+    --surface: #ffffff;
+    --surface2: #f9f9f7;
+    --border: #e5e5e0;
+    --border2: #d0d0c8;
+    --text: #1a1a18;
+    --text2: #6b6b65;
+    --text3: #9b9b95;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --accent2: #059669;
+    --danger: #dc2626;
+    --warn: #d97706;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
+    font-family: 'Inter', sans-serif;
     background: var(--bg);
     color: var(--text);
-    font-family: 'Noto Serif SC', serif;
     min-height: 100vh;
-    padding: 40px 20px;
+    font-size: 14px;
+    line-height: 1.5;
   }
 
   header {
-    text-align: center;
-    margin-bottom: 40px;
-  }
-
-  header h1 {
-    font-size: 2rem;
-    color: var(--accent);
-    letter-spacing: 0.1em;
-    margin-bottom: 8px;
-  }
-
-  header p {
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-  }
-
-  .controls {
-    max-width: 800px;
-    margin: 0 auto 32px;
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: var(--shadow);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.75); }
+  }
+
+  .logo-sub { font-size: 13px; color: var(--text3); font-weight: 400; }
+
+  .header-link {
+    color: var(--text2);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .header-link:hover { background: var(--bg); color: var(--text); }
+
+  .main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 28px 24px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
   }
 
-  .controls label {
-    font-size: 0.8rem;
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-    margin-bottom: 4px;
-    display: block;
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
   }
 
-  .controls textarea {
+  .card-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .card-icon {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    background: var(--accent-light);
+  }
+
+  .card-body { padding: 20px; }
+
+  textarea {
     width: 100%;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text);
-    padding: 12px;
-    font-family: 'Noto Serif SC', serif;
-    font-size: 0.95rem;
+    padding: 10px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
     resize: vertical;
-    min-height: 80px;
+    min-height: 72px;
+    outline: none;
+    transition: border-color 0.15s;
   }
 
-  .controls textarea:focus { outline: none; border-color: var(--accent); }
+  textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 
-  .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
-
-  .field { display: flex; flex-direction: column; }
-
-  input[type=number], select {
+  input[type=number], input[type=text] {
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text);
-    padding: 8px 12px;
+    padding: 8px 10px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.9rem;
-    width: 120px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
   }
 
-  input[type=number]:focus, select:focus { outline: none; border-color: var(--accent); }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+  .param-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 5px;
+  }
+
+  .params-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .param-group { display: flex; flex-direction: column; }
 
   .btn {
-    padding: 10px 24px;
-    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: var(--radius-sm);
     border: none;
     cursor: pointer;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
     font-weight: 600;
-    transition: all 0.2s;
+    transition: all 0.15s;
+    outline: none;
+    white-space: nowrap;
   }
 
-  .btn-primary {
-    background: var(--accent);
-    color: #0f0f0f;
-  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-primary:disabled { background: var(--border2); color: var(--text3); cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--bg); color: var(--text); }
 
-  .btn-primary:hover { opacity: 0.85; }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .btn-secondary {
-    background: transparent;
-    color: var(--accent2);
-    border: 1px solid var(--accent2);
-  }
-
-  .btn-secondary:hover { background: var(--accent2); color: #0f0f0f; }
-
-  .progress-bar {
+  .progress-wrap {
     height: 4px;
     background: var(--border);
     border-radius: 2px;
     overflow: hidden;
+    margin-top: 14px;
     display: none;
   }
 
   .progress-fill {
     height: 100%;
     background: var(--accent);
+    border-radius: 2px;
     transition: width 0.3s;
   }
 
-  .grid {
-    max-width: 800px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 10px;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    transition: border-color 0.2s, transform 0.2s;
-    cursor: pointer;
-    position: relative;
-  }
-
-  .card:hover { border-color: var(--accent2); transform: translateY(-2px); }
-  .card.playing { border-color: var(--accent); }
-  .card.favorited { border-color: var(--good); }
-  .card.loading { opacity: 0.6; }
-
-  .card-id {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.2rem;
-    color: var(--accent);
-    font-weight: 600;
-  }
-
-  .card-status {
-    font-size: 0.75rem;
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .card-actions {
-    display: flex;
-    gap: 6px;
-    margin-top: 4px;
-  }
-
-  .btn-tiny {
-    padding: 4px 8px;
-    border-radius: 5px;
-    border: none;
-    cursor: pointer;
-    font-size: 0.7rem;
-    font-family: 'JetBrains Mono', monospace;
-    transition: all 0.15s;
-  }
-
-  .btn-play {
-    background: var(--accent);
-    color: #0f0f0f;
-    flex: 1;
-  }
-
-  .btn-play:hover { opacity: 0.8; }
-
-  .btn-fav {
-    background: transparent;
-    border: 1px solid var(--border) !important;
-    border: none;
-    color: var(--muted);
-    font-size: 1rem;
-    padding: 4px 6px;
-  }
-
-  .btn-fav.active { color: var(--good); }
-
-  .wave {
-    display: flex;
-    gap: 2px;
-    align-items: center;
-    height: 20px;
-  }
-
-  .wave span {
-    width: 3px;
-    background: var(--accent);
-    border-radius: 2px;
-    animation: wave 0.8s ease-in-out infinite;
-  }
-
-  .wave span:nth-child(2) { animation-delay: 0.1s; }
-  .wave span:nth-child(3) { animation-delay: 0.2s; }
-  .wave span:nth-child(4) { animation-delay: 0.3s; }
-  .wave span:nth-child(5) { animation-delay: 0.4s; }
-
-  @keyframes wave {
-    0%, 100% { height: 4px; }
-    50% { height: 16px; }
-  }
-
-  .favorites-bar {
-    max-width: 800px;
-    margin: 0 auto 24px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    display: none;
-  }
-
-  .favorites-bar h3 {
-    font-size: 0.8rem;
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-    margin-bottom: 10px;
-  }
-
-  .fav-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .fav-tag {
-    background: var(--good);
-    color: #0f0f0f;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .fav-tag:hover { opacity: 0.8; }
-
-  .section-title {
-    max-width: 800px;
-    margin: 0 auto 16px;
-    font-size: 0.8rem;
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
+  .status-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 12px;
+  }
+
+  .status-ok { color: var(--accent2); }
+  .fav-count { color: var(--warn); font-weight: 600; }
+
+  .fav-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 20px;
+    display: none;
+  }
+
+  .fav-bar-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+  }
+
+  .fav-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .fav-tag {
+    background: #fff7ed;
+    color: var(--warn);
+    border: 1px solid #fed7aa;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .fav-tag:hover { background: #ffedd5; }
+
+  .sid-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    gap: 10px;
+  }
+
+  .sid-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.15s;
+  }
+
+  .sid-card:hover { border-color: var(--border2); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .sid-card.playing { border-color: var(--accent); background: var(--accent-light); }
+  .sid-card.favorited { border-color: var(--warn); }
+  .sid-card.loading { opacity: 0.5; }
+
+  .sid-id { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--accent); }
+  .sid-status { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .sid-status.ready { color: var(--accent2); }
+  .sid-status.error { color: var(--danger); }
+
+  .sid-actions { display: flex; gap: 6px; margin-top: 2px; }
+
+  .btn-play {
+    flex: 1;
+    padding: 5px 6px;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .btn-play:hover { background: #1d4ed8; }
+  .btn-play:disabled { background: var(--border); color: var(--text3); cursor: not-allowed; }
+
+  .btn-fav {
+    padding: 5px 7px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text3);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-fav:hover { border-color: var(--warn); color: var(--warn); }
+  .btn-fav.active { color: var(--warn); border-color: var(--warn); background: #fff7ed; }
+
+  .wave {
+    display: flex; gap: 2px; align-items: center; height: 16px; margin-bottom: 2px;
+  }
+
+  .wave span {
+    width: 3px; background: var(--accent); border-radius: 2px;
+    animation: wave 0.8s ease-in-out infinite;
+  }
+
+  .wave span:nth-child(2) { animation-delay: 0.12s; }
+  .wave span:nth-child(3) { animation-delay: 0.24s; }
+  .wave span:nth-child(4) { animation-delay: 0.36s; }
+  .wave span:nth-child(5) { animation-delay: 0.48s; }
+
+  @keyframes wave {
+    0%, 100% { height: 3px; }
+    50% { height: 14px; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>说话人试音</h1>
-  <p>vits-icefall-zh-aishell3 · 170 speakers · sid 0–169</p>
+  <a href="./index.html" class="logo">
+    <div class="logo-dot"></div>
+    VoiceAPI Studio
+    <span class="logo-sub">/ 说话人试音</span>
+  </a>
+  <a href="./index.html" class="header-link">← 返回主页</a>
 </header>
 
-<div class="controls">
-  <div>
-    <label>试音文本</label>
-    <textarea id="text">你好，我是语音助手，请问有什么需要帮助的吗？</textarea>
-  </div>
-  <div class="row">
-    <div class="field">
-      <label>服务地址</label>
-      <input type="text" id="host" value="http://localhost:8000" style="width:200px">
-    </div>
-    <div class="field">
-      <label>语速</label>
-      <input type="number" id="speed" value="0.95" step="0.05" min="0.5" max="2.0">
-    </div>
-    <div class="field">
-      <label>范围 从</label>
-      <input type="number" id="rangeFrom" value="0" min="0" max="169">
-    </div>
-    <div class="field">
-      <label>到</label>
-      <input type="number" id="rangeTo" value="29" min="0" max="169">
-    </div>
-    <button class="btn btn-primary" id="btnBatch" onclick="batchGenerate()">批量生成</button>
-    <button class="btn btn-secondary" onclick="clearAll()">清空</button>
-  </div>
-  <div class="progress-bar" id="progressBar">
-    <div class="progress-fill" id="progressFill"></div>
-  </div>
-</div>
+<div class="main">
 
-<div class="favorites-bar" id="favBar">
-  <h3>⭐ 收藏的声音</h3>
-  <div class="fav-tags" id="favTags"></div>
-</div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-icon">🎙</div>
+        批量试音配置
+      </div>
+    </div>
+    <div class="card-body">
+      <div>
+        <label class="param-label">试音文本</label>
+        <textarea id="text">您好，我是智能语音助手，请问有什么需要帮助的吗？</textarea>
+      </div>
+      <div class="params-row">
+        <div class="param-group">
+          <label class="param-label">服务地址</label>
+          <input type="text" id="host" value="http://localhost:8000" style="width:185px">
+        </div>
+        <div class="param-group">
+          <label class="param-label">语速</label>
+          <input type="number" id="speed" value="0.95" step="0.05" min="0.5" max="2.0" style="width:85px">
+        </div>
+        <div class="param-group">
+          <label class="param-label">音量</label>
+          <input type="number" id="volume" value="1.0" step="0.1" min="0.1" max="2.0" style="width:85px">
+        </div>
+        <div class="param-group">
+          <label class="param-label">SID 从</label>
+          <input type="number" id="rangeFrom" value="0" min="0" max="173" style="width:75px">
+        </div>
+        <div class="param-group">
+          <label class="param-label">到</label>
+          <input type="number" id="rangeTo" value="19" min="0" max="173" style="width:75px">
+        </div>
+        <button class="btn btn-primary" id="btnBatch" onclick="batchGenerate()">▶ 批量生成</button>
+        <button class="btn btn-ghost" id="btnAutoPlay" onclick="toggleAutoPlay()" disabled>⏵ 批量播放</button>
+        <button class="btn btn-ghost" onclick="clearAll()">清空</button>
+      </div>
+      <div class="progress-wrap" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="status-bar">
+        <span id="statusText">设置范围后点击批量生成</span>
+        <span id="countText"></span>
+      </div>
+    </div>
+  </div>
 
-<div class="section-title">
-  <span id="statusText">点击"批量生成"开始试音</span>
-  <span id="countText"></span>
-</div>
+  <div class="fav-bar" id="favBar">
+    <div class="fav-bar-title">⭐ 收藏的声音 · 点击播放</div>
+    <div class="fav-tags" id="favTags"></div>
+  </div>
 
-<div class="grid" id="grid"></div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-icon">🔊</div>
+        声音列表
+      </div>
+      <span style="font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;">SID 0 – 173 · 共 174 个</span>
+    </div>
+    <div class="card-body">
+      <div class="sid-grid" id="grid">
+        <p style="color:var(--text3);font-size:13px;grid-column:1/-1;text-align:center;padding:24px 0;">
+          点击上方「批量生成」开始试音
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
 
 <script>
 const favorites = new Set();
 const audioCache = {};
 let currentAudio = null;
 let currentCard = null;
+let autoPlaying = false;
+let autoPlayStop = false;
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function toggleAutoPlay() {
+  if (autoPlaying) {
+    // 停止
+    autoPlayStop = true;
+    autoPlaying = false;
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    if (currentCard) { currentCard.classList.remove('playing'); currentCard = null; }
+    document.getElementById('btnAutoPlay').textContent = '⏵ 批量播放';
+    document.getElementById('statusText').textContent = '批量播放已停止';
+    return;
+  }
+
+  // 收集所有就绪的 SID（按卡片顺序）
+  const readySids = Object.keys(audioCache).map(Number).sort((a, b) => a - b);
+  if (readySids.length === 0) { alert('没有已生成的声音'); return; }
+
+  autoPlaying = true;
+  autoPlayStop = false;
+  document.getElementById('btnAutoPlay').textContent = '⏹ 停止播放';
+
+  for (let i = 0; i < readySids.length; i++) {
+    if (autoPlayStop) break;
+    const sid = readySids[i];
+    document.getElementById('statusText').textContent = `批量播放中 SID ${sid}（${i + 1}/${readySids.length}）`;
+
+    // 高亮当前卡片
+    if (currentCard) { currentCard.classList.remove('playing'); }
+    const card = document.getElementById(`card-${sid}`);
+    if (card) { card.classList.add('playing'); currentCard = card; }
+
+    // 播放
+    await new Promise(resolve => {
+      const audio = new Audio(audioCache[sid]);
+      currentAudio = audio;
+      audio.play();
+      audio.onended = resolve;
+      audio.onerror = resolve;
+    });
+
+    if (autoPlayStop) break;
+    if (currentCard) { currentCard.classList.remove('playing'); currentCard = null; }
+
+    // 停顿 3 秒
+    if (i < readySids.length - 1) {
+      document.getElementById('statusText').textContent = `等待 3 秒... 下一个 SID ${readySids[i + 1]}`;
+      await sleep(3000);
+    }
+  }
+
+  if (!autoPlayStop) {
+    document.getElementById('statusText').innerHTML = '<span class="status-ok">✓ 批量播放完成</span>';
+  }
+  autoPlaying = false;
+  autoPlayStop = false;
+  currentAudio = null;
+  if (currentCard) { currentCard.classList.remove('playing'); currentCard = null; }
+  document.getElementById('btnAutoPlay').textContent = '⏵ 批量播放';
+}
 
 function getConfig() {
   return {
     host: document.getElementById('host').value.trim(),
     text: document.getElementById('text').value.trim(),
     speed: parseFloat(document.getElementById('speed').value),
+    volume: parseFloat(document.getElementById('volume').value),
     from: parseInt(document.getElementById('rangeFrom').value),
     to: parseInt(document.getElementById('rangeTo').value),
   };
@@ -355,14 +519,14 @@ function initGrid(from, to) {
   grid.innerHTML = '';
   for (let sid = from; sid <= to; sid++) {
     const card = document.createElement('div');
-    card.className = 'card';
+    card.className = 'sid-card';
     card.id = `card-${sid}`;
     card.innerHTML = `
-      <div class="card-id">SID ${sid}</div>
-      <div class="card-status" id="status-${sid}">未生成</div>
-      <div class="card-actions">
-        <button class="btn-tiny btn-play" onclick="playSid(${sid})" id="btn-${sid}" disabled>▶ 播放</button>
-        <button class="btn-tiny btn-fav" onclick="toggleFav(${sid})" id="fav-${sid}">☆</button>
+      <div class="sid-id">SID ${sid}</div>
+      <div class="sid-status" id="status-${sid}">未生成</div>
+      <div class="sid-actions">
+        <button class="btn-play" onclick="playSid(${sid})" id="btn-${sid}" disabled>▶ 播放</button>
+        <button class="btn-fav" onclick="toggleFav(${sid})" id="fav-${sid}">☆</button>
       </div>
     `;
     grid.appendChild(card);
@@ -373,140 +537,93 @@ async function generateSid(sid, config) {
   const card = document.getElementById(`card-${sid}`);
   const status = document.getElementById(`status-${sid}`);
   const btn = document.getElementById(`btn-${sid}`);
-
   card.classList.add('loading');
   status.textContent = '生成中...';
-
+  status.className = 'sid-status';
   try {
-    const url = `${config.host}/tts`;
-    const resp = await fetch(url, {
+    const resp = await fetch(`${config.host}/tts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: config.text,
-        sid: sid,
-        samplerate: 8000,
-        speed: config.speed,
-        volume: 1.0
-      })
+      body: JSON.stringify({ text: config.text, sid, samplerate: 8000, speed: config.speed, volume: config.volume })
     });
-
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-
-    const blob = await resp.blob();
-    const url2 = URL.createObjectURL(blob);
-    audioCache[sid] = url2;
-
+    if (!resp.ok) throw new Error();
+    audioCache[sid] = URL.createObjectURL(await resp.blob());
     status.textContent = '就绪';
+    status.className = 'sid-status ready';
     btn.disabled = false;
-    card.classList.remove('loading');
-  } catch (e) {
+  } catch {
     status.textContent = '失败';
+    status.className = 'sid-status error';
+  } finally {
     card.classList.remove('loading');
   }
 }
 
 async function batchGenerate() {
   const config = getConfig();
-  if (config.to < config.from) {
-    alert('范围有误');
-    return;
-  }
-
-  const btn = document.getElementById('btnBatch');
-  btn.disabled = true;
-
+  if (isNaN(config.from) || isNaN(config.to) || config.to < config.from) { alert('请检查 SID 范围'); return; }
+  document.getElementById('btnBatch').disabled = true;
   initGrid(config.from, config.to);
-
   const total = config.to - config.from + 1;
   const progressBar = document.getElementById('progressBar');
   const progressFill = document.getElementById('progressFill');
   progressBar.style.display = 'block';
-
-  document.getElementById('statusText').textContent = `生成中... 0/${total}`;
-  document.getElementById('countText').textContent = '';
-
-  // 并发3个
-  const CONCURRENCY = 3;
+  progressFill.style.width = '0%';
   let done = 0;
-  const sids = [];
-  for (let i = config.from; i <= config.to; i++) sids.push(i);
-
-  async function worker(queue) {
+  const queue = Array.from({ length: total }, (_, i) => config.from + i);
+  async function worker() {
     while (queue.length > 0) {
       const sid = queue.shift();
       await generateSid(sid, config);
       done++;
       progressFill.style.width = `${(done / total) * 100}%`;
-      document.getElementById('statusText').textContent = `生成中... ${done}/${total}`;
+      document.getElementById('statusText').textContent = `生成中 ${done} / ${total}`;
     }
   }
-
-  const queue = [...sids];
-  const workers = Array.from({ length: CONCURRENCY }, () => worker(queue));
-  await Promise.all(workers);
-
+  await Promise.all([worker(), worker(), worker()]);
   progressBar.style.display = 'none';
-  document.getElementById('statusText').textContent = `✅ 全部生成完成，共 ${total} 个`;
-  btn.disabled = false;
+  document.getElementById('statusText').innerHTML = `<span class="status-ok">✓ 完成，共 ${total} 个</span>`;
+  document.getElementById('btnBatch').disabled = false;
+  document.getElementById('btnAutoPlay').disabled = false;
 }
 
 function playSid(sid) {
   if (!audioCache[sid]) return;
-
-  // 停止当前播放
   if (currentAudio) {
     currentAudio.pause();
-    currentAudio.currentTime = 0;
     if (currentCard) {
       currentCard.classList.remove('playing');
-      const waveEl = currentCard.querySelector('.wave');
-      if (waveEl) waveEl.remove();
-      const btn = currentCard.querySelector('.btn-play');
-      if (btn) btn.textContent = '▶ 播放';
+      const w = currentCard.querySelector('.wave'); if (w) w.remove();
+      const b = currentCard.querySelector('.btn-play'); if (b) b.textContent = '▶ 播放';
     }
   }
-
+  if (currentCard && currentCard.id === `card-${sid}`) { currentAudio = null; currentCard = null; return; }
   const card = document.getElementById(`card-${sid}`);
   const btn = document.getElementById(`btn-${sid}`);
-
   const audio = new Audio(audioCache[sid]);
-  currentAudio = audio;
-  currentCard = card;
-
+  currentAudio = audio; currentCard = card;
   card.classList.add('playing');
   btn.textContent = '⏹ 停止';
-
-  // 加波形动画
   const wave = document.createElement('div');
   wave.className = 'wave';
   wave.innerHTML = '<span></span><span></span><span></span><span></span><span></span>';
-  card.querySelector('.card-actions').before(wave);
-
+  card.querySelector('.sid-actions').before(wave);
   audio.play();
   audio.onended = () => {
     card.classList.remove('playing');
     btn.textContent = '▶ 播放';
     wave.remove();
-    currentAudio = null;
-    currentCard = null;
+    currentAudio = null; currentCard = null;
   };
 }
 
 function toggleFav(sid) {
   const btn = document.getElementById(`fav-${sid}`);
   const card = document.getElementById(`card-${sid}`);
-
   if (favorites.has(sid)) {
-    favorites.delete(sid);
-    btn.textContent = '☆';
-    btn.classList.remove('active');
-    card.classList.remove('favorited');
+    favorites.delete(sid); btn.textContent = '☆'; btn.classList.remove('active'); card.classList.remove('favorited');
   } else {
-    favorites.add(sid);
-    btn.textContent = '★';
-    btn.classList.add('active');
-    card.classList.add('favorited');
+    favorites.add(sid); btn.textContent = '★'; btn.classList.add('active'); card.classList.add('favorited');
   }
   updateFavBar();
 }
@@ -514,12 +631,8 @@ function toggleFav(sid) {
 function updateFavBar() {
   const bar = document.getElementById('favBar');
   const tags = document.getElementById('favTags');
-
-  if (favorites.size === 0) {
-    bar.style.display = 'none';
-    return;
-  }
-
+  const countEl = document.getElementById('countText');
+  if (favorites.size === 0) { bar.style.display = 'none'; countEl.textContent = ''; return; }
   bar.style.display = 'block';
   tags.innerHTML = '';
   [...favorites].sort((a, b) => a - b).forEach(sid => {
@@ -529,24 +642,19 @@ function updateFavBar() {
     tag.onclick = () => playSid(sid);
     tags.appendChild(tag);
   });
-
-  document.getElementById('countText').textContent = `收藏 ${favorites.size} 个`;
+  countEl.innerHTML = `<span class="fav-count">★ ${favorites.size} 个收藏</span>`;
 }
 
 function clearAll() {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-    currentCard = null;
-  }
-  Object.keys(audioCache).forEach(k => {
-    URL.revokeObjectURL(audioCache[k]);
-    delete audioCache[k];
-  });
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; currentCard = null; }
+  autoPlayStop = true; autoPlaying = false;
+  document.getElementById('btnAutoPlay').textContent = '⏵ 批量播放';
+  document.getElementById('btnAutoPlay').disabled = true;
+  Object.keys(audioCache).forEach(k => { URL.revokeObjectURL(audioCache[k]); delete audioCache[k]; });
   favorites.clear();
-  document.getElementById('grid').innerHTML = '';
+  document.getElementById('grid').innerHTML = '<p style="color:var(--text3);font-size:13px;grid-column:1/-1;text-align:center;padding:24px 0;">点击上方「批量生成」开始试音</p>';
   document.getElementById('favBar').style.display = 'none';
-  document.getElementById('statusText').textContent = '点击"批量生成"开始试音';
+  document.getElementById('statusText').textContent = '设置范围后点击批量生成';
   document.getElementById('countText').textContent = '';
 }
 </script>

@@ -1,10 +1,11 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('demoapp', () => ({
         // --- 1. 变量定义 (确保 index.html 中的 x-model 都能找到对应变量) ---
-        text: '通知：光猫拨号异常，请各单位派员核查。',
+        text: '您好，我是智能语音助手，请问有什么需要帮助的吗？',
         targetSid: 6,         // 默认说话人ID
         targetSpeed: 0.95,    // 默认语速
-        targetRate: 8000,     // 默认采样率 (适配 aishell3)
+        targetRate: 8000,     // 默认采样率
+        targetVolume: 1.0,    // 默认音量
         
         recording: false,
         asrWS: null,
@@ -58,7 +59,7 @@ document.addEventListener('alpine:init', () => {
                 await audioContext.audioWorklet.addModule('./audio_process.js');
                 
                 // 修复点：使用 getWsUrl 构建完整地址，解决 URL invalid 报错
-                const wsUrl = this.getWsUrl(`/tts?samplerate=${rate}&sid=${this.targetSid}&speed=${this.targetSpeed}&split=true`);
+                const wsUrl = this.getWsUrl(`/tts?samplerate=${rate}&sid=${this.targetSid}&speed=${this.targetSpeed}&volume=${this.targetVolume}&split=true`);
                 console.log("TTS 连接中:", wsUrl);
                 const ws = new WebSocket(wsUrl);
 
